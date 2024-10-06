@@ -45,8 +45,8 @@ tailleCarre = sqrt(K);
 % Choix de l'image
 image = im(:,:,:,num);
 
-sizeX = size(image,1);
-sizeY = size(image,2);
+sizeX = size(image,2);
+sizeY = size(image,1);
 N =  sizeX * sizeY;
 S = sqrt(N/K); % dimension d'un côté d'une région à l'itération 0
 
@@ -61,10 +61,28 @@ for i = 0:tailleCarre-1
     end
 end
 
+% Recentrage des germes
+
+% Selon Y
+distToTop = posY(1,1);
+distToBottom = sizeY - posY(tailleCarre, tailleCarre);
+offsetY = (distToBottom + distToTop)/2 - distToTop;
+posY = posY + offsetY;
+
+% Selon X
+distToLeft = posX(1,1);
+distToRight = sizeX - posX(tailleCarre, tailleCarre);
+offsetX = (distToRight + distToLeft)/2 - distToLeft;
+posX = posX + offsetX;
+
 imshow(im(:,:,:,num)); title('Image');
 hold on;
 scatter(posX, posY, 'r+', 'LineWidth', 2);
 
+% A enlever pour faire la suite
+return
+
+%% Deuxième partie
 
 % Algorithme itératif
 while 1
