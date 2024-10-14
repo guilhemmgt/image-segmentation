@@ -32,7 +32,7 @@ m = 10;       % Poids de la distance géométrique (contre la distance colorimé
 %% INITIALISATION
 
 % Image originale
-image = im(:, :, :, num);
+image = rgb2lab(im(:, :, :, num));
 nb_px_x = size(image, 2);   % Nb de pixels sur la largeur
 nb_px_y = size(image, 1);   % Nb de pixels sur la hauteur
 N =  nb_px_x * nb_px_y;     % Nb de pixels
@@ -53,7 +53,7 @@ end
 germes = reshape(germes, [], 2); % Flattening
 
 % Plot
-imshow(im(:,:,:,num)); title('Image');
+imshow(lab2rgb(im(:,:,:,num))); title('Image');
 hold on;
 scatter(germes(:, 1), germes(:, 2), 'r+', 'LineWidth', 2);
 
@@ -78,7 +78,7 @@ while 1
                 dy = abs(px_y - germes(germe, 2));
 
                 % Le choix du germe doit être dans un voisinage 2S*2S
-                if (dx > S || dy > S)
+                if (dx > 4*S || dy > 4*S)
                     continue
                 end
 
@@ -113,14 +113,15 @@ while 1
     image_etiquettes = zeros (nb_px_y, nb_px_x, 3);
     for x = 1:nb_px_x
         for y = 1:nb_px_y
-           image_etiquettes(y, x, :) = color(etiquettes(y,x,1), :);
+            image_etiquettes(y, x, :) = color(etiquettes(y,x,1), :);
         end
     end
     image_etiquettes = uint8(image_etiquettes);
     % Superpixels en transparence
     alpha = 1;
-    imshow(alpha * image_etiquettes + (1-alpha) * image)
+    imshow(lab2rgb(alpha * image_etiquettes + (1-alpha) * image));
     scatter(germes(:, 1), germes(:, 2), 'r+', 'LineWidth', 2);
+    drawnow nocallbacks
 
     %% Mise à jour des centres (moyennes des attributs)
     old_germes = germes;
