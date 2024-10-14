@@ -53,7 +53,7 @@ end
 germes = reshape(germes, [], 2); % Flattening
 
 % Plot
-imshow(lab2rgb(im(:,:,:,num))); title('Image');
+imshow(im(:,:,:,num)); title('Image');
 hold on;
 scatter(germes(:, 1), germes(:, 2), 'r+', 'LineWidth', 2);
 
@@ -62,9 +62,9 @@ scatter(germes(:, 1), germes(:, 2), 'r+', 'LineWidth', 2);
 nb_iter_max = 1000;
 nb_current_iter = 0;
 
+etiquettes = zeros(nb_px_y, nb_px_x, 1); % Appartenances pixel/germe
 while 1
     %% Calcul des superpixels
-    etiquettes = zeros(nb_px_y, nb_px_x, 1); % Appartenances pixel/germe
 
     % On boucle sur chaque pixel
     for px_x = 1:nb_px_x
@@ -78,7 +78,7 @@ while 1
                 dy = abs(px_y - germes(germe, 2));
 
                 % Le choix du germe doit être dans un voisinage 2S*2S
-                if (dx > 4*S || dy > 4*S)
+                if (dx > S || dy > S)
                     continue
                 end
 
@@ -87,7 +87,7 @@ while 1
                 % Distance colorimétrique (RGB)
                 pixel_rgb = image(px_y, px_x, :);   
                 germe_rgb = image(round(germes(germe, 2)), round(germes(germe, 1)), :);
-                d_rgb = sum(pixel_rgb - germe_rgb);
+                d_rgb = sqrt(sum(pixel_rgb - germe_rgb).^2);
                 % Distance pondérée
                 d_s = d_rgb + (m/S)*d_xy;
                 
@@ -116,10 +116,10 @@ while 1
             image_etiquettes(y, x, :) = color(etiquettes(y,x,1), :);
         end
     end
-    image_etiquettes = uint8(image_etiquettes);
+    %image_etiquettes = uint8(image_etiquettes);
     % Superpixels en transparence
     alpha = 1;
-    imshow(lab2rgb(alpha * image_etiquettes + (1-alpha) * image));
+    imshow(alpha * lab2rgb(image_etiquettes) + (1-alpha) * lab2rgb(image));
     scatter(germes(:, 1), germes(:, 2), 'r+', 'LineWidth', 2);
     drawnow nocallbacks
 
@@ -136,6 +136,7 @@ while 1
         break
     end
 
+    fprintf('Fin itération %d \n', nb_current_iter)
     if nb_current_iter >= nb_iter_max
         break
     end
