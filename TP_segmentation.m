@@ -26,7 +26,7 @@ figure;
 %% VARIABLES
 K = 101;      % Nb de superpixels
 num = 1;      % N° de l'image traitée
-seuil = 10;   % Seuil pour condition d'arrêt
+Seuil = 10;   % Seuil pour condition d'arrêt
 m = 10;       % Poids de la distance géométrique (contre la distance colorimétrique)
 
 %% INITIALISATION
@@ -59,7 +59,7 @@ scatter(germes(:, 1), germes(:, 2), 'r+', 'LineWidth', 2);
 
 %% ITÉRATIONS
 
-nb_iter_max = 1;
+nb_iter_max = 1000;
 nb_current_iter = 0;
 
 while 1
@@ -122,41 +122,23 @@ while 1
     imshow(alpha * image_etiquettes + (1-alpha) * image)
     scatter(germes(:, 1), germes(:, 2), 'r+', 'LineWidth', 2);
 
-    % Mise à jour des centres (moyennes des attributs)
-
-    % Obj : changer posX et posY
-
-    % pour chaque germe, on récupère les pixels attribués
-    positionsPixelsGermes = zeros(nb_px_x, nb_px_y, nb_superpixels_x, nb_superpixels_y);
-
-    for germe_i = 1:nb_superpixels_x
-        for germe_j = 1:nb_superpixels_y
-            %islinkedToCurrentGerm = find(etiquette(:,:,1) == germe_i) .* find(etiquette(:,:,2) == germe_j);
-        end
+    %% Mise à jour des centres (moyennes des attributs)
+    old_germes = germes;
+    for germe = 1:length(germes)
+        [px_y, px_x] = find(etiquettes == germe);
+        germes(germe, :) = [mean(px_x), mean(px_y)];
     end
-
-
-    % maj = zeros (grille_superpixels_x, grille_superpixels_y, 1, 1, 1);    
-    % for px_x = 1:sizeX
-    %     for px_y = 1:sizeY
-    %         gi, gj = etiquette(px_x, px_y, :);
-    %         old_x, old_y, old_n = maj (gi, gj, :, :, :);
-    %         maj (gi, gj, 1, 1, 1) = maj (gi, gj, old_x + px_x, old_y + px_y, old_n + 1);
-    %     end
-    % end
-
     
     % Calcul de E (L1 entre les anciens et nouveaux Ck)
-    %if E<Seuil
-     %   break
-    %end
+    E = vecnorm (germes - old_germes, 1);
+    if E<Seuil
+        break
+    end
 
     if nb_current_iter >= nb_iter_max
         break
     end
-
     nb_current_iter = nb_current_iter + 1;
-    break
 end
 
 
