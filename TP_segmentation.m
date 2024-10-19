@@ -24,7 +24,7 @@ figure;
 %subplot(2,2,4); imshow(im(:,:,:,25)); title('Image 25');
 
 %% VARIABLES
-K = 101;      % Nb de superpixels
+K = 100;      % Nb de superpixels
 num = 1;      % N° de l'image traitée
 Seuil = 10;   % Seuil pour condition d'arrêt
 m = 10;       % Poids de la distance géométrique (contre la distance colorimétrique)
@@ -38,7 +38,7 @@ nb_px_y = size(image, 1);   % Nb de pixels sur la hauteur
 N =  nb_px_x * nb_px_y;     % Nb de pixels
 
 % Superpixels
-S = sqrt(N/K);                            % A l'itération 0, un superpixel à une taille S*S
+S = sqrt(N/K);                           % A l'itération 0, un superpixel à une taille S*S
 nb_superpixels_x = ceil (nb_px_x / S);   % Nb de superpixels sur la largeur
 nb_superpixels_y = ceil (nb_px_y / S);   % Nb de superpixels sur la hauteur
 
@@ -131,12 +131,13 @@ while 1
     end
     
     % Calcul de E (L1 entre les anciens et nouveaux Ck)
-    E = vecnorm (germes - old_germes, 1);
+    E = norm (germes - old_germes);
     if E<Seuil
         break
     end
 
-    fprintf('Fin itération %d \n', nb_current_iter)
+    E
+
     if nb_current_iter >= nb_iter_max
         break
     end
