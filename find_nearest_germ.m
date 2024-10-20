@@ -23,7 +23,7 @@ function nearest_germ_index = find_nearest_germ(germs, image, px_x, px_y, S, m)
         % Distance colorimétrique
         px_color = reshape(image(px_x, px_y, :), 1, 3);
         germ_color = reshape(image(round(germs(k, 1)), round(germs(k, 2)), :), 1, 3);
-        d_color = norm(px_color - germ_color);
+        d_color = sqrt( (px_color(1)-germ_color(1))^2 + (px_color(2)-germ_color(2))^2 + (px_color(3)-germ_color(3))^2 );
         % Distance pondérée
         d_s = d_color + m/S * d_xy;
         

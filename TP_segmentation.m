@@ -66,7 +66,9 @@ imshow(im(:,:,:,num)); title('Image');
 hold on;
 scatter(germs(:, 2), germs(:, 1), 'r+', 'LineWidth', 2);
 
-%% ITÉRATIONS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Calcul des superpixels                                %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 nb_iter_max = 1000;
 iter = 0;
@@ -93,11 +95,20 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% A COMPLETER                                             %
-% Binarisation de l'image à partir des superpixels        %
+%% Binarisation de l'image à partir des superpixels      %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% ........................................................%
+bin = zeros (nb_px_x, nb_px_y);
+for k = 1:length(germs)
+    germ_rgb = lab2rgb(image(round(germs(k, 1)), round(germs(k, 2)), :));
+    if (germ_rgb(1) > germ_rgb(3))
+        bin(labels==k) = 1;
+    else
+        bin(labels==k) = 0;
+    end
+end
+
+plot_bin (bin);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % A DECOMMENTER ET COMPLETER                              %

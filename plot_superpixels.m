@@ -8,6 +8,12 @@ function [] = plot_superpixels(germs, labels, image, alpha)
     for k = 1:length(germs)
         germs_color (k, :) = image (round(germs(k, 1)), round(germs(k, 2)), :);
     end
+    % ou: couluers aléatoires
+    germs_color = zeros (length(germs), 3);
+    germs_color(:, 1) = uint8(rand(length(germs), 1) * 100); % L
+    germs_color(:, 2) = uint8(rand(length(germs), 1) * 255 - 128); % a
+    germs_color(:, 3) = uint8(rand(length(germs), 1) * 255 - 128); % b
+
 
     % Couleur d'un pixel = couleur du superpixel auquel il appartient
     px_colored = zeros (nb_px_x, nb_px_y, 3);
