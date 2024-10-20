@@ -61,44 +61,14 @@ scatter(germes(:, 1), germes(:, 2), 'r+', 'LineWidth', 2);
 
 nb_iter_max = 1000;
 nb_current_iter = 0;
+E = realmax;
+etiquettes = zeros(nb_px_y, nb_px_x); % Appartenances pixel/germe
 
-etiquettes = zeros(nb_px_y, nb_px_x, 1); % Appartenances pixel/germe
-while 1
+while nb_current_iter < nb_iter_max && E > Seuil
     %% Calcul des superpixels
-
-    % On boucle sur chaque pixel
     for px_x = 1:nb_px_x
         for px_y = 1:nb_px_y
-
-            % Recherche du meilleur germe pour chaque pixel
-            min_d = realmax;
-            for germe = 1:length(germes)
-                % Distance géométrique pixel-germe selon X et Y
-                dx = abs(px_x - germes(germe, 1));
-                dy = abs(px_y - germes(germe, 2));
-
-                % Le choix du germe doit être dans un voisinage 2S*2S
-                if (dx > S || dy > S)
-                    continue
-                end
-
-                % Distance géométrique
-                d_xy = sqrt(dx^2 + dy^2);
-                % Distance colorimétrique (RGB)
-                pixel_rgb = image(px_y, px_x, :);   
-                germe_rgb = image(round(germes(germe, 2)), round(germes(germe, 1)), :);
-                d_rgb = sqrt(sum(pixel_rgb - germe_rgb).^2);
-                % Distance pondérée
-                d_s = d_rgb + (m/S)*d_xy;
-                
-                % Condition de nouveau meilleur germe
-                if min_d > d_s
-                    min_d = d_s;
-                    etiquettes(px_y, px_x, 1) = germe;
-                end
-
-            end
-
+            etiquettes(px_y, px_x) = find_nearest_germ(germes, image, px_x, px_y, S, m);
         end
     end
 
@@ -113,7 +83,7 @@ while 1
     image_etiquettes = zeros (nb_px_y, nb_px_x, 3);
     for x = 1:nb_px_x
         for y = 1:nb_px_y
-            image_etiquettes(y, x, :) = color(etiquettes(y,x,1), :);
+            image_etiquettes(y, x, :) = color(etiquettes(y,x), :);
         end
     end
     %image_etiquettes = uint8(image_etiquettes);
@@ -124,24 +94,19 @@ while 1
     drawnow nocallbacks
 
     %% Mise à jour des centres (moyennes des attributs)
-    old_germes = germes;
-    for germe = 1:length(germes)
-        [px_y, px_x] = find(etiquettes == germe);
-        germes(germe, :) = [mean(px_x), mean(px_y)];
+    new_germes = zeros(size(germes, 1), size(germes, 2));
+    for k = 1:length(germes)
+        [px_y, px_x] = find(etiquettes == k);
+        new_germes(k, :) = [mean(px_x), mean(px_y)];
     end
-    
-    % Calcul de E (L1 entre les anciens et nouveaux Ck)
-    E = norm (germes - old_germes);
-    if E<Seuil
-        break
-    end
+     
+    %% Màj des conditions d'arrêt
+    E = norm (new_germes - germes);         % Calcul de E (L1 entre les anciens et nouveaux Ck)
+    nb_current_iter = nb_current_iter + 1;  % Nb max d'itérations
+
+    germes = new_germes;
 
     E
-
-    if nb_current_iter >= nb_iter_max
-        break
-    end
-    nb_current_iter = nb_current_iter + 1;
 end
 
 
