@@ -24,17 +24,17 @@ figure;
 %subplot(2,2,4); imshow(im(:,:,:,25)); title('Image 25');
 
 %% VARIABLES
-K = 100;      % Nb de superpixels
+K = 200;      % Nb de superpixels
 num = 1;      % N° de l'image traitée
-Seuil = 10;   % Seuil pour condition d'arrêt
+seuil = 10;   % Seuil pour condition d'arrêt
 m = 10;       % Poids de la distance géométrique (contre la distance colorimétrique)
 
 %% INITIALISATION
 
 % Image originale
 image = rgb2lab(im(:, :, :, num));
-nb_px_x = size(image, 2);   % Nb de pixels sur la largeur
-nb_px_y = size(image, 1);   % Nb de pixels sur la hauteur
+nb_px_x = size(image, 1);   % Nb de pixels sur la hauteur
+nb_px_y = size(image, 2);   % Nb de pixels sur la largeur
 N =  nb_px_x * nb_px_y;     % Nb de pixels
 
 % Superpixels
@@ -43,70 +43,52 @@ nb_superpixels_x = ceil (nb_px_x / S);   % Nb de superpixels sur la largeur
 nb_superpixels_y = ceil (nb_px_y / S);   % Nb de superpixels sur la hauteur
 
 % Placement des germes
-germes = zeros (nb_superpixels_x, nb_superpixels_y, 2);
+% germes = zeros (nb_superpixels_x, nb_superpixels_y, 2);
+% for i = 1:nb_superpixels_x
+%     for j = 1:nb_superpixels_y
+%         % germes(i, j, 1) = (nb_px_x - S * (nb_superpixels_x-1))/2 + S*(i-1); % x
+%         % germes(i, j, 2) = (nb_px_y - S * (nb_superpixels_y-1))/2 + S*(j-1); % y
+%         germes(i, j, 1) = S*(i-1); % x
+%         germes(i, j, 2) = S*(j-1); % y
+%     end
+% end
+germs = zeros (nb_superpixels_x * nb_superpixels_y, 2);
 for i = 1:nb_superpixels_x
     for j = 1:nb_superpixels_y
-        germes(i, j, 1) = (nb_px_x - S * (nb_superpixels_x-1))/2 + S*(i-1); % x
-        germes(i, j, 2) = (nb_px_y - S * (nb_superpixels_y-1))/2 + S*(j-1); % y
+        germs((j-1)*nb_superpixels_x+i, 1) = (nb_px_x - S * (nb_superpixels_x-1))/2 + S*(i-1); % x
+        germs((j-1)*nb_superpixels_x+i, 2) = (nb_px_y - S * (nb_superpixels_y-1))/2 + S*(j-1); % y
     end
 end
-germes = reshape(germes, [], 2); % Flattening
+% germes = reshape(germes, [], 2); % Flattening
 
 % Plot
 imshow(im(:,:,:,num)); title('Image');
 hold on;
-scatter(germes(:, 1), germes(:, 2), 'r+', 'LineWidth', 2);
+scatter(germs(:, 2), germs(:, 1), 'r+', 'LineWidth', 2);
 
 %% ITÉRATIONS
 
 nb_iter_max = 1000;
-nb_current_iter = 0;
+iter = 0;
 E = realmax;
-etiquettes = zeros(nb_px_y, nb_px_x); % Appartenances pixel/germe
+labels = zeros(nb_px_x, nb_px_y); % Appartenances pixel/germe
 
-while nb_current_iter < nb_iter_max && E > Seuil
-    %% Calcul des superpixels
+while iter < nb_iter_max && E > seuil
+    % Calcul des superpixels
     for px_x = 1:nb_px_x
         for px_y = 1:nb_px_y
-            etiquettes(px_y, px_x) = find_nearest_germ(germes, image, px_x, px_y, S, m);
+            labels(px_x, px_y) = find_nearest_germ(germs, image, px_x, px_y, S, m);
         end
     end
 
-    %% Plot
-    % Couleur d'un superpixel = couleur du pixel le + proche du germe
-    color = zeros (length(germes), 3);
-    for germe = 1:length(germes)
-        color (germe, :) = image (round(germes(germe, 2)), round(germes(germe, 1)), :);
-    end
-    % color = uint8(rand(length(germes), 3) * 255); % couleurs aléatoires
-    % Couleur d'un pixel = couleur du superpixel auquel il appartient
-    image_etiquettes = zeros (nb_px_y, nb_px_x, 3);
-    for x = 1:nb_px_x
-        for y = 1:nb_px_y
-            image_etiquettes(y, x, :) = color(etiquettes(y,x), :);
-        end
-    end
-    %image_etiquettes = uint8(image_etiquettes);
-    % Superpixels en transparence
-    alpha = 1;
-    imshow(alpha * lab2rgb(image_etiquettes) + (1-alpha) * lab2rgb(image));
-    scatter(germes(:, 1), germes(:, 2), 'r+', 'LineWidth', 2);
-    drawnow nocallbacks
+    % Plot
+    plot_superpixels (germs, labels, image, 1);
 
-    %% Mise à jour des centres (moyennes des attributs)
-    new_germes = zeros(size(germes, 1), size(germes, 2));
-    for k = 1:length(germes)
-        [px_y, px_x] = find(etiquettes == k);
-        new_germes(k, :) = [mean(px_x), mean(px_y)];
-    end
-     
-    %% Màj des conditions d'arrêt
-    E = norm (new_germes - germes);         % Calcul de E (L1 entre les anciens et nouveaux Ck)
-    nb_current_iter = nb_current_iter + 1;  % Nb max d'itérations
+    % Mise à jour des centres (moyennes des attributs)
+    [germs, E] = update_germs (germs, labels);
 
-    germes = new_germes;
-
-    E
+    % Nb d'itérations
+    iter = iter + 1;
 end
 
 
